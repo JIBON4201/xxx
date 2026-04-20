@@ -70,3 +70,37 @@ Stage Summary:
 - Performance: preload hints, fetchPriority, image optimization, cross-origin fix
 - robots.txt hardened against AI scrapers and bad bots while allowing social crawlers
 - Key files: src/app/page.tsx, src/app/layout.tsx, public/robots.txt, public/og-image.png, next.config.ts
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Add ad placement system to the landing page
+
+Work Log:
+- Created reusable ad component system in src/components/ad-components.tsx:
+  - AdSlot: Core component with lazy-load via IntersectionObserver, 7 size presets (leaderboard, banner, rectangle, skyscraper, mobile-banner, native, fluid), dismissible option, sticky positioning support, data-ad-slot attributes for ad networks
+  - AdBanner: Full-width horizontal leaderboard ad wrapper
+  - InContentAd: Native-style in-article ad wrapper
+  - SidebarAd: 300x250 rectangle for sidebar placement
+  - MobileStickyAd: 320x50 sticky bottom bar, mobile-only, dismissible with safe-area-inset support
+- Integrated 8 ad placements into page.tsx at strategic positions:
+  1. Below Hero (leaderboard) — high-visibility after first impression
+  2. Between Features & How It Works (leaderboard)
+  3. Before Article (leaderboard) — above long-content engagement zone
+  4. In-Article Midway (native) — within SEO content, between H3 sections
+  5. In-Article Lower (native) — second in-content placement
+  6. Before FAQ (leaderboard) — pre-engagement zone
+  7. Before Final CTA (leaderboard) — last chance impression
+  8. Mobile Sticky Bottom (mobile-banner) — persistent mobile-only bar
+- All leaderboard ads are dismissible with close button
+- All ad slots use data-ad-slot and data-ad-size attributes for easy ad network integration
+- Components include code comments showing how to replace with real AdSense/PropellerAds/TrafficStars code
+- Verified lint clean and dev server returning 200
+
+Stage Summary:
+- Built a complete, production-ready ad placement system with 4 reusable components
+- 8 strategically placed ad slots across the page (5 leaderboard, 2 native in-content, 1 sticky mobile)
+- Lazy-loaded ads (IntersectionObserver) for performance — ads only render when scrolled into view
+- All ad components are demo placeholders with clear instructions for real ad network integration
+- Non-intrusive design: ads blend with the dark theme, dismissible, mobile-optimized
+- Key file: src/components/ad-components.tsx, src/app/page.tsx (updated)

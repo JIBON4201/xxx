@@ -29,6 +29,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { AdBanner, InContentAd, MobileStickyAd } from "@/components/ad-components";
 
 const WATCH_NOW_URL = "#watch-now";
 const SITE_NAME = "VaultStream";
@@ -518,6 +519,9 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── AD: Below Hero (Leaderboard) ── */}
+        <AdBanner id="below-hero" slot="below-hero-728x90" label="728×90 Leaderboard — Below Hero" dismissible />
+
         {/* ═══════════════ FEATURES ═══════════════ */}
         <section className="py-20 sm:py-28" id="features" aria-labelledby="features-heading">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -574,6 +578,9 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        {/* ── AD: Between Features & How It Works ── */}
+        <AdBanner id="mid-page-1" slot="mid-page-1-728x90" label="728×90 Leaderboard — Mid Page 1" dismissible />
 
         {/* ═══════════════ HOW IT WORKS ═══════════════ */}
         <section className="py-20 sm:py-28" id="how-it-works" aria-labelledby="how-heading">
@@ -638,6 +645,9 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        {/* ── AD: Before Article ── */}
+        <AdBanner id="pre-article" slot="pre-article-728x90" label="728×90 Leaderboard — Before Article" dismissible />
 
         <Separator className="mx-auto max-w-4xl bg-white/5" aria-hidden="true" />
 
@@ -783,6 +793,9 @@ export default function Home() {
                 DSL.
               </motion.p>
 
+              {/* ── AD: In-Article Midway ── */}
+              <InContentAd id="in-article-1" slot="in-article-1-native" label="Native In-Article Ad — Midway" />
+
               <motion.h3
                 variants={fadeUp}
                 custom={10}
@@ -860,6 +873,9 @@ export default function Home() {
                 without compromising privacy.
               </motion.p>
 
+              {/* ── AD: In-Article Lower ── */}
+              <InContentAd id="in-article-2" slot="in-article-2-native" label="Native In-Article Ad — Lower" />
+
               <motion.h3
                 variants={fadeUp}
                 custom={16}
@@ -899,6 +915,9 @@ export default function Home() {
             </motion.div>
           </div>
         </article>
+
+        {/* ── AD: Between Article & FAQ ── */}
+        <AdBanner id="pre-faq" slot="pre-faq-728x90" label="728×90 Leaderboard — Before FAQ" dismissible />
 
         <Separator className="mx-auto max-w-4xl bg-white/5" aria-hidden="true" />
 
@@ -960,6 +979,9 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        {/* ── AD: Between FAQ & Final CTA ── */}
+        <AdBanner id="pre-cta" slot="pre-cta-728x90" label="728×90 Leaderboard — Before CTA" dismissible />
 
         {/* ═══════════════ FINAL CTA ═══════════════ */}
         <section className="py-20 sm:py-28" id="watch-now" aria-labelledby="cta-heading">
@@ -1070,6 +1092,9 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      {/* ── AD: Sticky Mobile Bottom Bar ── */}
+      <MobileStickyAd id="mobile-sticky" slot="mobile-sticky-320x50" />
 
       {/* ═══════════════ FOOTER ═══════════════ */}
       <footer className="border-t border-white/5 py-10" role="contentinfo">
