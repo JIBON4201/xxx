@@ -30,7 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { AdBanner, InContentAd, MobileStickyAd } from "@/components/ad-components";
+import { AdBanner, InContentAd, MobileStickyAd, SidebarAd } from "@/components/ad-components";
 import { WatchNowPopup } from "@/components/watch-now-popup";
 import { AiGallerySection } from "@/components/ai-gallery-section";
 import { useAdMonetization } from "@/hooks/use-ad-monetization";
@@ -432,6 +432,11 @@ export default function Home() {
         </div>
       </motion.nav>
 
+      {/* ── AD: Top Bar (immediately below navbar) ── */}
+      <div className="relative z-40">
+        <AdBanner id="top-bar" slot="top-bar-728x90" label="728×90 Leaderboard — Top Bar" dismissible />
+      </div>
+
       <main className="relative z-10" role="main">
         {/* ═══════════════ HERO ═══════════════ */}
         <section
@@ -558,6 +563,9 @@ export default function Home() {
         {/* ═══════════════ AI GALLERY ═══════════════ */}
         <AiGallerySection onCardClick={openPopup} />
 
+        {/* ── AD: Between Gallery & Features ── */}
+        <AdBanner id="post-gallery" slot="post-gallery-728x90" label="728×90 Leaderboard — Post Gallery" dismissible />
+
         {/* ═══════════════ FEATURES ═══════════════ */}
         <section className="py-20 sm:py-28" id="features" aria-labelledby="features-heading">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -681,6 +689,9 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        {/* ── AD: Between How It Works & Article ── */}
+        <AdBanner id="post-howitworks" slot="post-howitworks-728x90" label="728×90 Leaderboard — Post How It Works" dismissible />
 
         {/* ── AD: Before Article ── */}
         <AdBanner id="pre-article" slot="pre-article-728x90" label="728×90 Leaderboard — Before Article" dismissible />
@@ -1106,6 +1117,9 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── AD: After Final CTA / Before Disclaimer ── */}
+        <AdBanner id="post-cta" slot="post-cta-728x90" label="728×90 Leaderboard — Post CTA" dismissible />
+
         {/* ═══════════════ 18+ DISCLAIMER ═══════════════ */}
         <section className="py-8" aria-label="Age restriction disclaimer">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -1127,6 +1141,9 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      {/* ── AD: Pre-Footer (after all main content) ── */}
+      <AdBanner id="pre-footer" slot="pre-footer-728x90" label="728×90 Leaderboard — Pre Footer" />
 
       {/* ── AD: Sticky Mobile Bottom Bar ── */}
       <MobileStickyAd id="mobile-sticky" slot="mobile-sticky-320x50" />
@@ -1168,6 +1185,11 @@ export default function Home() {
 
           <Separator className="my-6 bg-white/5" aria-hidden="true" />
 
+          {/* ── AD: Inside Footer ── */}
+          <div className="my-4">
+            <AdBanner id="footer-inline" slot="footer-inline-728x90" label="728×90 Leaderboard — Footer" dismissible />
+          </div>
+
           <div className="flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
             <p>
               &copy; {new Date().getFullYear()} VaultStream. All rights
@@ -1181,6 +1203,11 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ── AD: Very Bottom (last thing on page) ── */}
+      <div className="pb-4">
+        <AdBanner id="bottom-trap" slot="bottom-trap-728x90" label="728×90 Leaderboard — Page Bottom" />
+      </div>
     </div>
     </>
   );

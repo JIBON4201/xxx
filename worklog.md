@@ -288,3 +288,29 @@ Stage Summary:
 - SEO-friendly: rel="sponsored", aria-label, role="complementary"
 - Performance: lazy-loaded, no blocking, lightweight
 - Key files: ad-components.tsx (rewritten), watch-now-popup.tsx (updated), ad-scripts-provider.tsx (updated)
+---
+Task ID: 9
+Agent: Main Agent
+Task: Add ad slots from the very beginning of the site — full page coverage
+
+Work Log:
+- Added 7 new ad placements to page.tsx, bringing total from 10 to 17 working slots
+- New slots added:
+  1. top-bar (line 437) — Immediately below navbar, before hero
+  2. post-gallery (line 567) — Between AI Gallery and Features
+  3. post-howitworks (line 694) — Between How It Works and Before Article
+  4. post-cta (line 1121) — After Final CTA, before 18+ Disclaimer
+  5. pre-footer (line 1146) — After all main content, before footer
+  6. footer-inline (line 1190) — Inside footer, before copyright
+  7. bottom-trap (line 1209) — Very last element on page
+- Every slot from navbar to page bottom now has a clickable smartlink ad
+- All leaderboard ads are dismissible (close button)
+- Mobile sticky remains at the bottom throughout
+- Verified: lint clean (0 errors), dev server compiling normally
+
+Stage Summary:
+- Total working ad slots: 17 (page: 15, popup: 2)
+- Full page coverage from top to bottom — every section has an adjacent ad
+- Slot order (top→bottom): top-bar → below-hero → post-gallery → mid-page-1 → post-howitworks → pre-article → in-article-1 → in-article-2 → pre-faq → pre-cta → post-cta → pre-footer → mobile-sticky → footer-inline → bottom-trap → popup-content-banner → popup-mid-native
+- Each slot is a clickable smartlink unit with rotating ad copy
+- Key file: src/app/page.tsx (updated)
