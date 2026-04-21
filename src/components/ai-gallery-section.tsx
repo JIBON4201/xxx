@@ -291,6 +291,28 @@ const GALLERY_CARDS: AiGalleryCard[] = [
     icon: Crown,
     category: "nature",
   },
+
+  // ── New cards 27–28 ──
+  {
+    id: "scene-27",
+    title: "Silken Dreamscape",
+    tag: "AI Preview",
+    image: "/ai-gallery/scene-27.png",
+    duration: "2:48",
+    views: "19.3K",
+    icon: Sparkles,
+    category: "fantasy",
+  },
+  {
+    id: "scene-28",
+    title: "Velvet Horizon",
+    tag: "Trending Visual",
+    image: "/ai-gallery/scene-28.png",
+    duration: "3:14",
+    views: "26.7K",
+    icon: Flame,
+    category: "scifi",
+  },
 ];
 
 const CATEGORIES = [
