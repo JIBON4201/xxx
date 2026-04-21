@@ -342,3 +342,55 @@ Stage Summary:
 - Navigation clarity text under grid guides users to scroll for more content
 - Overall design theme and dark cinematic style preserved
 - All ad slots remain functional (only hero-inline ad removed for cleaner flow)
+---
+Task ID: 2
+Agent: Main
+Task: Full feature audit and bug fix pass across all components
+
+Work Log:
+- Read and audited all 8 key files: page.tsx, ai-gallery-section.tsx, watch-now-popup.tsx, ad-components.tsx, ad-scripts-provider.tsx, use-ad-monetization.ts, layout.tsx, globals.css
+- Ran ESLint — initially clean, found issues during code review
+- Checked dev server log — no new errors after fixes
+
+Bugs found and fixed:
+
+1. **page.tsx — Dead code / unused imports**
+   - Removed unused `SidebarAd` import (no sidebar ads in current layout)
+   - Removed dead `stats` constant (hero stats section was removed in prior task)
+   - Cleaned up extra blank lines left from stats removal
+
+2. **watch-now-popup.tsx — 4 unused imports**
+   - Removed `Volume2`, `Maximize2`, `Settings`, `SkipForward` (imported but never used)
+
+3. **watch-now-popup.tsx — Missing `group` class (CSS hover bug)**
+   - Line 398 (was 397): Video player container had `group-hover:opacity-100` on child element (bottom controls bar) but no `group` class on parent
+   - Fixed by adding `group` class to the video player div
+   - Result: Bottom controls bar now properly shows/hides on hover
+
+4. **ad-components.tsx — Random ad text changing on every re-render**
+   - `getRandomCopy()` was called directly in render body → ad text shuffled on every state change
+   - Fixed by wrapping in `useMemo()` with `size` dependency
+   - Also memoized `copyType` computation
+
+5. **ad-components.tsx — Inconsistent ad URL between href and click handler**
+   - `href` attribute called `getRandomSmartlink()` directly → changed on every render
+   - Click handler used a separate `getRandomSmartlink()` call → different URL than href
+   - Fixed by creating `adUrl` with `useMemo()` and using it for both `href` and `handleClick`
+
+6. **ad-components.tsx — React hooks called after conditional return**
+   - After adding `useMemo` calls, they ended up after `if (dismissed) return null;`
+   - This violated React's rules-of-hooks (hooks must be called unconditionally)
+   - Fixed by moving all `useMemo` calls before the conditional return
+
+All fixes verified:
+- ESLint passes with 0 errors, 0 warnings
+- Dev server compiles successfully
+- Page returns HTTP 200
+
+Stage Summary:
+- 6 bugs found and fixed across 3 files
+- All lint checks pass
+- No runtime errors in dev log
+- Ad system now stable: consistent URLs and copy per slot render
+- Popup video player controls bar hover effect now works correctly
+- No dead code or unused imports remaining

@@ -31,7 +31,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { AdBanner, InContentAd, MobileStickyAd, SidebarAd } from "@/components/ad-components";
+import { AdBanner, InContentAd, MobileStickyAd } from "@/components/ad-components";
 import { WatchNowPopup } from "@/components/watch-now-popup";
 import { AiGallerySection } from "@/components/ai-gallery-section";
 import { useAdMonetization } from "@/hooks/use-ad-monetization";
@@ -326,13 +326,6 @@ const faqs = [
     q: "How often is new content added to VaultStream?",
     a: "New exclusive content is added daily to VaultStream's library. Our content team reviews and curates submissions around the clock to maintain the highest quality standards. With 50,000+ videos already available and hundreds added each week, there's always something new to discover. You can browse trending content, new releases, or use our smart filters to find exactly what you're looking for.",
   },
-];
-
-const stats = [
-  { icon: Users, value: "2.4M+", label: "Active Viewers" },
-  { icon: Play, value: "50K+", label: "Exclusive Videos" },
-  { icon: Globe, value: "190+", label: "Countries Served" },
-  { icon: Star, value: "4.9/5", label: "User Rating" },
 ];
 
 const trustBadges = [

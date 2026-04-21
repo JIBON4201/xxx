@@ -18,10 +18,6 @@ import {
   ThumbsUp,
   MessageCircle,
   Share2,
-  Volume2,
-  Maximize2,
-  Settings,
-  SkipForward,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PopupBanner } from "@/components/ad-components";
@@ -395,7 +391,7 @@ export function WatchNowPopup({ open, onClose, onContentClick }: WatchNowPopupPr
                   <div className="flex-1 overflow-y-auto">
                     {/* Fake Video Player */}
                     <div
-                      className="relative aspect-video w-full cursor-pointer overflow-hidden bg-black"
+                      className="group relative aspect-video w-full cursor-pointer overflow-hidden bg-black"
                       onClick={() => handlePlayClick(FEATURED.id)}
                       role="button"
                       tabIndex={0}

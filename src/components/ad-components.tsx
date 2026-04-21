@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { X, ExternalLink, Shield, Play, Star, Zap, Clock } from "lucide-react";
 import { AD_CONFIG } from "@/lib/ad-config";
@@ -111,24 +111,27 @@ export function AdSlot({
     return () => observer.disconnect();
   }, [id]);
 
+  // Memoize ad URL so it stays consistent between render and click
+  const adUrl = useMemo(() => forceUrl || getRandomSmartlink(), [forceUrl]);
+
   const handleClick = useCallback(() => {
     clickCountRef.current += 1;
-    const url = forceUrl || getRandomSmartlink();
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
+    if (adUrl) {
+      window.open(adUrl, "_blank", "noopener,noreferrer");
     }
-  }, [forceUrl]);
+  }, [adUrl]);
+
+  // Memoize copy so it doesn't change on every re-render
+  const copyType = useMemo(() => {
+    if (size === "native") return "native";
+    if (size === "rectangle") return "rectangle";
+    if (size === "mobile-banner") return "mobile";
+    if (size === "popup-banner") return "popup";
+    return "leaderboard";
+  }, [size]);
+  const copy = useMemo(() => getRandomCopy(copyType), [copyType]);
 
   if (dismissed) return null;
-
-  // Determine copy type based on size
-  const copyType =
-    size === "native" ? "native" :
-    size === "rectangle" ? "rectangle" :
-    size === "mobile-banner" ? "mobile" :
-    size === "popup-banner" ? "popup" :
-    "leaderboard";
-  const copy = getRandomCopy(copyType);
 
   return (
     <div
@@ -171,7 +174,7 @@ export function AdSlot({
       ) : (
         /* ── Clickable ad unit ── */
         <a
-          href={forceUrl || getRandomSmartlink()}
+          href={adUrl}
           target="_blank"
           rel="noopener noreferrer sponsored"
           onClick={(e) => {
