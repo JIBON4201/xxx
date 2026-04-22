@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { getStaticCardsAll } from "@/lib/gallery-data";
 
 // GET /api/admin/cards — fetch all cards (including inactive)
+// Falls back to static data if database is unavailable (e.g., Vercel)
 export async function GET() {
   try {
+    const { db } = await import("@/lib/db");
     const cards = await db.galleryCard.findMany({
       orderBy: { order: "asc" },
     });
-    return NextResponse.json(cards);
-  } catch (error) {
-    console.error("GET /api/admin/cards error:", error);
-    return NextResponse.json({ error: "Failed to fetch cards" }, { status: 500 });
+    if (cards && cards.length > 0) {
+      return NextResponse.json(cards);
+    }
+  } catch {
+    // Database unavailable — use static fallback
   }
+
+  return NextResponse.json(getStaticCardsAll());
 }
 
 // POST /api/admin/cards — create new card
@@ -24,6 +29,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "title and image are required" }, { status: 400 });
     }
 
+    const { db } = await import("@/lib/db");
     const maxOrder = await db.galleryCard.findFirst({
       orderBy: { order: "desc" },
       select: { order: true },
@@ -51,6 +57,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "sceneId already exists" }, { status: 409 });
     }
     console.error("POST /api/admin/cards error:", error);
-    return NextResponse.json({ error: "Failed to create card" }, { status: 500 });
+    return NextResponse.json({ error: "Database unavailable — card management requires local deployment" }, { status: 503 });
   }
 }

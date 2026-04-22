@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 
 // PUT /api/admin/cards/[id] — update card
 export async function PUT(
@@ -10,6 +9,7 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
 
+    const { db } = await import("@/lib/db");
     const card = await db.galleryCard.update({
       where: { id },
       data: body,
@@ -21,7 +21,7 @@ export async function PUT(
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
     console.error("PUT /api/admin/cards/[id] error:", error);
-    return NextResponse.json({ error: "Failed to update card" }, { status: 500 });
+    return NextResponse.json({ error: "Database unavailable — card management requires local deployment" }, { status: 503 });
   }
 }
 
@@ -32,6 +32,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    const { db } = await import("@/lib/db");
     await db.galleryCard.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
@@ -39,6 +41,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
     console.error("DELETE /api/admin/cards/[id] error:", error);
-    return NextResponse.json({ error: "Failed to delete card" }, { status: 500 });
+    return NextResponse.json({ error: "Database unavailable — card management requires local deployment" }, { status: 503 });
   }
 }

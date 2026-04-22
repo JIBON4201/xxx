@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PopupBanner } from "@/components/ad-components";
 import { AD_CONFIG } from "@/lib/ad-config";
+import { getStaticCards } from "@/lib/gallery-data";
 
 /* ════════════════════════════════════════════════════════════════
    WATCH NOW POPUP — REDESIGNED FLOW
@@ -80,14 +81,38 @@ export function WatchNowPopup({ open, onClose, onContentClick, selectedCard }: W
   const contentClickedRef = useRef(false);
   const [galleryCards, setGalleryCards] = useState<Array<{ id: string; sceneId: string; title: string; image: string; tag: string; duration: string; views: string }>>([]);
 
-  // Fetch all gallery cards from database
+  // Fetch all gallery cards from database (fallback to static data on Vercel)
   useEffect(() => {
     fetch("/api/gallery")
       .then((res) => res.json())
       .then((data) => {
-        if (data.length > 0) setGalleryCards(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setGalleryCards(data);
+          return;
+        }
+        // Fallback to static data
+        setGalleryCards(getStaticCards(true).map(c => ({
+          id: c.sceneId,
+          sceneId: c.sceneId,
+          title: c.title,
+          image: c.image,
+          tag: c.tag,
+          duration: c.duration,
+          views: c.views,
+        })));
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback to static data
+        setGalleryCards(getStaticCards(true).map(c => ({
+          id: c.sceneId,
+          sceneId: c.sceneId,
+          title: c.title,
+          image: c.image,
+          tag: c.tag,
+          duration: c.duration,
+          views: c.views,
+        })));
+      });
   }, []);
 
   // Build featured content from the clicked card

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Play, Eye, Clock, Sparkles, TrendingUp, Film, Flame, Crown, Zap, ChevronDown, RefreshCw } from "lucide-react";
+import { getStaticCards, type StaticGalleryCard } from "@/lib/gallery-data";
 
 /* ════════════════════════════════════════════════════════════════
    AI GALLERY SECTION
@@ -65,20 +66,25 @@ export function AiGallerySection({ onCardClick }: AiGallerySectionProps) {
   const [cards, setCards] = useState<GalleryCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch cards from database
+  // Fetch cards from API (database), fallback to static data
   useEffect(() => {
     async function fetchCards() {
       try {
         const res = await fetch("/api/gallery");
         if (res.ok) {
           const data = await res.json();
-          setCards(data);
+          if (Array.isArray(data) && data.length > 0) {
+            setCards(data);
+            setLoading(false);
+            return;
+          }
         }
-      } catch (err) {
-        console.error("Failed to fetch gallery cards:", err);
-      } finally {
-        setLoading(false);
+      } catch {
+        // API failed — use static fallback
       }
+      // Fallback: use built-in static data (works on Vercel without DB)
+      setCards(getStaticCards(true) as unknown as GalleryCardData[]);
+      setLoading(false);
     }
     fetchCards();
   }, []);

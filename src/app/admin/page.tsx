@@ -50,6 +50,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { getStaticCardsAll } from "@/lib/gallery-data";
 
 /* ════════════════════════════════════════════════════════════════
    TYPES
@@ -111,20 +112,29 @@ export default function AdminPage() {
   const [deleteTarget, setDeleteTarget] = useState<GalleryCard | null>(null);
   const [uploadCardId, setUploadCardId] = useState<string | null>(null);
 
-  // Fetch cards
+  // Fetch cards (fallback to static data on Vercel)
+  const [useStaticMode, setUseStaticMode] = useState(false);
+
   const fetchCards = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/admin/cards");
       if (res.ok) {
         const data = await res.json();
-        setCards(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setCards(data);
+          setUseStaticMode(false);
+          setLoading(false);
+          return;
+        }
       }
-    } catch (err) {
-      console.error("Failed to fetch cards:", err);
-    } finally {
-      setLoading(false);
+    } catch {
+      // API failed — use static fallback
     }
+    // Fallback: use built-in static data
+    setCards(getStaticCardsAll() as unknown as GalleryCard[]);
+    setUseStaticMode(true);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -296,6 +306,21 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        {/* Vercel / Static Mode Notice */}
+        {useStaticMode && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
+              <Settings className="h-4 w-4 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-amber-400">Read-Only Mode</p>
+              <p className="text-[11px] text-muted-foreground">
+                No database detected. Showing static card data. Edit, upload, and delete features require local deployment with SQLite.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── Stats bar ── */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card className="border-white/10 bg-white/[0.02]">
