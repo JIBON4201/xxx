@@ -5,7 +5,6 @@ import { getStaticCards } from "@/lib/gallery-data";
 // Falls back to static data if database is unavailable (e.g., Vercel)
 export async function GET() {
   try {
-    // Try database first
     const { db } = await import("@/lib/db");
     const cards = await db.galleryCard.findMany({
       where: { active: true },
@@ -18,6 +17,5 @@ export async function GET() {
     // Database unavailable — use static fallback
   }
 
-  // Fallback: return static data (works on Vercel without DB)
   return NextResponse.json(getStaticCards(true));
 }

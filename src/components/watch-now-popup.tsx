@@ -81,38 +81,85 @@ export function WatchNowPopup({ open, onClose, onContentClick, selectedCard }: W
   const contentClickedRef = useRef(false);
   const [galleryCards, setGalleryCards] = useState<Array<{ id: string; sceneId: string; title: string; image: string; tag: string; duration: string; views: string }>>([]);
 
-  // Fetch all gallery cards from database (fallback to static data on Vercel)
+  // Fetch all gallery cards (DB → localStorage → static data)
   useEffect(() => {
-    fetch("/api/gallery")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setGalleryCards(data);
-          return;
-        }
-        // Fallback to static data
-        setGalleryCards(getStaticCards(true).map(c => ({
-          id: c.sceneId,
-          sceneId: c.sceneId,
-          title: c.title,
-          image: c.image,
-          tag: c.tag,
-          duration: c.duration,
-          views: c.views,
-        })));
-      })
-      .catch(() => {
-        // Fallback to static data
-        setGalleryCards(getStaticCards(true).map(c => ({
-          id: c.sceneId,
-          sceneId: c.sceneId,
-          title: c.title,
-          image: c.image,
-          tag: c.tag,
-          duration: c.duration,
-          views: c.views,
-        })));
-      });
+    function loadCards() {
+      fetch("/api/gallery")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setGalleryCards(data);
+            return;
+          }
+          // Try localStorage
+          try {
+            const stored = localStorage.getItem("vaultstream_cards");
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const active = parsed.filter((c: Record<string, unknown>) => c.active !== false);
+                if (active.length > 0) {
+                  setGalleryCards(active.map((c: Record<string, unknown>) => ({
+                    id: String(c.sceneId || c.id),
+                    sceneId: String(c.sceneId || ""),
+                    title: String(c.title || ""),
+                    image: String(c.image || ""),
+                    tag: String(c.tag || ""),
+                    duration: String(c.duration || ""),
+                    views: String(c.views || ""),
+                  })));
+                  return;
+                }
+              }
+            }
+          } catch {}
+          // Static fallback
+          setGalleryCards(getStaticCards(true).map(c => ({
+            id: c.sceneId,
+            sceneId: c.sceneId,
+            title: c.title,
+            image: c.image,
+            tag: c.tag,
+            duration: c.duration,
+            views: c.views,
+          })));
+        })
+        .catch(() => {
+          // Try localStorage
+          try {
+            const stored = localStorage.getItem("vaultstream_cards");
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const active = parsed.filter((c: Record<string, unknown>) => c.active !== false);
+                if (active.length > 0) {
+                  setGalleryCards(active.map((c: Record<string, unknown>) => ({
+                    id: String(c.sceneId || c.id),
+                    sceneId: String(c.sceneId || ""),
+                    title: String(c.title || ""),
+                    image: String(c.image || ""),
+                    tag: String(c.tag || ""),
+                    duration: String(c.duration || ""),
+                    views: String(c.views || ""),
+                  })));
+                  return;
+                }
+              }
+            }
+          } catch {}
+          // Static fallback
+          setGalleryCards(getStaticCards(true).map(c => ({
+            id: c.sceneId,
+            sceneId: c.sceneId,
+            title: c.title,
+            image: c.image,
+            tag: c.tag,
+            duration: c.duration,
+            views: c.views,
+          })));
+        });
+    }
+    loadCards();
   }, []);
 
   // Build featured content from the clicked card

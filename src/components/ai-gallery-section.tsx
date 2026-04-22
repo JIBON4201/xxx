@@ -66,7 +66,7 @@ export function AiGallerySection({ onCardClick }: AiGallerySectionProps) {
   const [cards, setCards] = useState<GalleryCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch cards from API (database), fallback to static data
+  // Fetch cards from API (database), fallback to localStorage, then static data
   useEffect(() => {
     async function fetchCards() {
       try {
@@ -80,9 +80,24 @@ export function AiGallerySection({ onCardClick }: AiGallerySectionProps) {
           }
         }
       } catch {
-        // API failed — use static fallback
+        // API failed — try localStorage
       }
-      // Fallback: use built-in static data (works on Vercel without DB)
+      // Fallback: check localStorage first (for admin edits on Vercel)
+      try {
+        const stored = localStorage.getItem("vaultstream_cards");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const active = parsed.filter((c: Record<string, unknown>) => c.active !== false);
+            if (active.length > 0) {
+              setCards(active as unknown as GalleryCardData[]);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch {}
+      // Final fallback: use built-in static data
       setCards(getStaticCards(true) as unknown as GalleryCardData[]);
       setLoading(false);
     }

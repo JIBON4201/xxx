@@ -12,15 +12,14 @@ import {
   Save,
   Search,
   ChevronLeft,
-  Eye,
-  EyeOff,
   RefreshCw,
+  Database,
+  HardDrive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -33,7 +32,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -46,9 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { getStaticCardsAll } from "@/lib/gallery-data";
 
@@ -94,6 +90,26 @@ const DEFAULT_CARD: Omit<GalleryCard, "id" | "createdAt" | "updatedAt"> = {
   active: true,
 };
 
+const STORAGE_KEY = "vaultstream_cards";
+
+/* localStorage helpers */
+function saveToStorage(cards: GalleryCard[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  } catch {}
+}
+
+function loadFromStorage(): GalleryCard[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return null;
+}
+
 /* ════════════════════════════════════════════════════════════════
    ADMIN PAGE
    ════════════════════════════════════════════════════════════════ */
@@ -111,10 +127,9 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<GalleryCard | null>(null);
   const [uploadCardId, setUploadCardId] = useState<string | null>(null);
+  const [storageMode, setStorageMode] = useState<"db" | "local">("db");
 
-  // Fetch cards (fallback to static data on Vercel)
-  const [useStaticMode, setUseStaticMode] = useState(false);
-
+  // Fetch cards: try API → fallback localStorage → fallback static data
   const fetchCards = useCallback(async () => {
     try {
       setLoading(true);
@@ -123,17 +138,25 @@ export default function AdminPage() {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setCards(data);
-          setUseStaticMode(false);
+          setStorageMode("db");
           setLoading(false);
           return;
         }
       }
     } catch {
-      // API failed — use static fallback
+      // API failed
     }
-    // Fallback: use built-in static data
+    // Try localStorage
+    const stored = loadFromStorage();
+    if (stored) {
+      setCards(stored);
+      setStorageMode("local");
+      setLoading(false);
+      return;
+    }
+    // Fallback: static data
     setCards(getStaticCardsAll() as unknown as GalleryCard[]);
-    setUseStaticMode(true);
+    setStorageMode("static");
     setLoading(false);
   }, []);
 
@@ -156,6 +179,14 @@ export default function AdminPage() {
     return true;
   });
 
+  // Persist cards to correct storage
+  const persistCards = useCallback((updated: GalleryCard[]) => {
+    setCards(updated);
+    if (storageMode === "local") {
+      saveToStorage(updated);
+    }
+  }, [storageMode]);
+
   // Open edit dialog
   const openEdit = (card: GalleryCard) => {
     setEditingCard(card);
@@ -176,26 +207,57 @@ export default function AdminPage() {
     if (!editForm.title || !editForm.image) return;
     setSaving(true);
     try {
+      if (storageMode === "db") {
+        // Try database API first
+        let apiSuccess = false;
+        if (isNew) {
+          const res = await fetch("/api/admin/cards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(editForm),
+          });
+          apiSuccess = res.ok;
+        } else if (editingCard) {
+          const res = await fetch(`/api/admin/cards/${editingCard.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(editForm),
+          });
+          apiSuccess = res.ok;
+        }
+        if (apiSuccess) {
+          await fetchCards();
+          setEditingCard(null);
+          setIsNew(false);
+          setSaving(false);
+          return;
+        }
+      }
+
+      // localStorage or DB fallback: save locally
+      const now = new Date().toISOString();
+      let updated: GalleryCard[];
       if (isNew) {
-        const res = await fetch("/api/admin/cards", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editForm),
-        });
-        if (res.ok) {
-          await fetchCards();
-          setEditingCard(null);
-        }
+        const newCard: GalleryCard = {
+          ...editForm,
+          id: `local-${Date.now()}`,
+          createdAt: now,
+          updatedAt: now,
+        };
+        updated = [...cards, newCard];
       } else if (editingCard) {
-        const res = await fetch(`/api/admin/cards/${editingCard.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editForm),
-        });
-        if (res.ok) {
-          await fetchCards();
-          setEditingCard(null);
-        }
+        updated = cards.map((c) =>
+          c.id === editingCard.id ? { ...editForm, id: c.id, createdAt: c.createdAt, updatedAt: now } : c
+        );
+      } else {
+        updated = cards;
+      }
+      persistCards(updated);
+      setEditingCard(null);
+      setIsNew(false);
+      if (storageMode === "db") {
+        // We got here because API failed, switch to local mode
+        setStorageMode("local");
       }
     } catch (err) {
       console.error("Failed to save card:", err);
@@ -208,31 +270,25 @@ export default function AdminPage() {
   const deleteCard = async () => {
     if (!deleteTarget) return;
     try {
-      const res = await fetch(`/api/admin/cards/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        await fetchCards();
-        setDeleteTarget(null);
+      if (storageMode === "db") {
+        const res = await fetch(`/api/admin/cards/${deleteTarget.id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          await fetchCards();
+          setDeleteTarget(null);
+          return;
+        }
+      }
+      // localStorage fallback
+      const updated = cards.filter((c) => c.id !== deleteTarget.id);
+      persistCards(updated);
+      setDeleteTarget(null);
+      if (storageMode === "db") {
+        setStorageMode("local");
       }
     } catch (err) {
       console.error("Failed to delete card:", err);
-    }
-  };
-
-  // Toggle active
-  const toggleActive = async (card: GalleryCard) => {
-    try {
-      const res = await fetch(`/api/admin/cards/${card.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !card.active }),
-      });
-      if (res.ok) {
-        await fetchCards();
-      }
-    } catch (err) {
-      console.error("Failed to toggle active:", err);
     }
   };
 
@@ -251,12 +307,15 @@ export default function AdminPage() {
 
       if (res.ok) {
         const data = await res.json();
-        // Update form or refresh
-        if (cardId) {
-          setEditForm((prev) => ({ ...prev, image: data.url }));
+        setEditForm((prev) => ({ ...prev, image: data.url }));
+        if (cardId && storageMode === "db") {
           await fetchCards();
-        } else {
-          setEditForm((prev) => ({ ...prev, image: data.url }));
+        } else if (cardId && editingCard) {
+          // Update locally too
+          const updated = cards.map((c) =>
+            c.id === cardId ? { ...c, image: data.url, updatedAt: new Date().toISOString() } : c
+          );
+          persistCards(updated);
         }
         return data.url;
       }
@@ -278,9 +337,12 @@ export default function AdminPage() {
     return colors[cat] || colors.all;
   };
 
+  const storageLabel = storageMode === "db" ? "Database" : storageMode === "local" ? "Browser Storage" : "Built-in";
+  const storageColor = storageMode === "db" ? "text-emerald-400" : storageMode === "local" ? "text-amber-400" : "text-muted-foreground";
+
   return (
     <div className="min-h-screen bg-background">
-      {/* ── Admin Header ── */}
+      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
@@ -306,22 +368,32 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {/* Vercel / Static Mode Notice */}
-        {useStaticMode && (
-          <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
-              <Settings className="h-4 w-4 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-amber-400">Read-Only Mode</p>
-              <p className="text-[11px] text-muted-foreground">
-                No database detected. Showing static card data. Edit, upload, and delete features require local deployment with SQLite.
-              </p>
-            </div>
+        {/* Storage mode notice */}
+        <div className={`mb-6 flex items-center gap-3 rounded-xl border p-4 ${
+          storageMode === "db"
+            ? "border-emerald-500/30 bg-emerald-500/10"
+            : "border-amber-500/30 bg-amber-500/10"
+        }`}>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+            storageMode === "db" ? "bg-emerald-500/20" : "bg-amber-500/20"
+          }`}>
+            {storageMode === "db" ? <Database className="h-4 w-4 text-emerald-400" /> : <HardDrive className="h-4 w-4 text-amber-400" />}
           </div>
-        )}
+          <div>
+            <p className={`text-sm font-medium ${storageColor}`}>
+              {storageMode === "db" ? "Database Mode" : storageMode === "local" ? "Browser Storage Mode" : "Static Mode"}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {storageMode === "db"
+                ? "Connected to SQLite. All changes are saved to the database."
+                : storageMode === "local"
+                ? "No database detected. Edits are saved in your browser (localStorage). Clearing browser data will reset changes."
+                : "Showing built-in default data. Edit a card to activate browser storage."}
+            </p>
+          </div>
+        </div>
 
-        {/* ── Stats bar ── */}
+        {/* Stats bar */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card className="border-white/10 bg-white/[0.02]">
             <CardContent className="p-4">
@@ -351,7 +423,7 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* ── Filters ── */}
+        {/* Filters */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-2">
             <div className="relative flex-1 sm:max-w-xs">
@@ -388,7 +460,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* ── Cards Grid ── */}
+        {/* Cards Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -502,7 +574,7 @@ export default function AdminPage() {
         )}
       </main>
 
-      {/* ── Edit / New Card Dialog ── */}
+      {/* Edit / New Card Dialog */}
       <Dialog open={!!editingCard || isNew} onOpenChange={(open) => !open && setEditingCard(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg border-white/10 bg-background">
           <DialogHeader>
@@ -603,7 +675,6 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="image" className="space-y-4 mt-4">
-              {/* Current image preview */}
               {editForm.image && (
                 <div className="relative aspect-video overflow-hidden rounded-xl border border-white/10">
                   <Image
@@ -617,7 +688,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Image URL input */}
               <div className="space-y-2">
                 <Label htmlFor="edit-image">Image URL</Label>
                 <div className="flex gap-2">
@@ -633,7 +703,6 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              {/* Upload button */}
               <div className="space-y-2">
                 <Label>Upload Image</Label>
                 <label
@@ -641,7 +710,7 @@ export default function AdminPage() {
                 >
                   <Upload className="h-5 w-5 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    {uploading ? "Uploading..." : "Click to upload (JPG, PNG, WebP, GIF — max 5MB)"}
+                    {uploading ? "Uploading..." : "Click to upload (JPG, PNG, WebP, GIF - max 5MB)"}
                   </span>
                   <input
                     type="file"
@@ -708,7 +777,7 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Quick Image Upload Dialog ── */}
+      {/* Quick Image Upload Dialog */}
       <Dialog open={!!uploadCardId} onOpenChange={(open) => !open && setUploadCardId(null)}>
         <DialogContent className="sm:max-w-md border-white/10 bg-background">
           <DialogHeader>
@@ -743,13 +812,13 @@ export default function AdminPage() {
               />
             </label>
             <p className="text-center text-[11px] text-muted-foreground">
-              JPG, PNG, WebP, GIF — max 5MB
+              JPG, PNG, WebP, GIF - max 5MB
             </p>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete Confirmation ── */}
+      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="border-white/10 bg-background">
           <AlertDialogHeader>
@@ -767,7 +836,7 @@ export default function AdminPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── Sticky Footer ── */}
+      {/* Sticky Footer */}
       <footer className="fixed bottom-0 left-0 right-0 border-t border-white/5 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-10 max-w-7xl items-center justify-center px-4">
           <p className="text-[11px] text-muted-foreground/50">
