@@ -348,8 +348,8 @@ export default function Home() {
   // Initialize ad monetization (popunder on first click, push on scroll)
   const { triggerSmartlinkRedirect, triggerPopunder } = useAdMonetization();
 
-  const openPopup = useCallback((card: { sceneId: string; title: string; image: string; tag: string; duration: string; views: string }) => {
-    setSelectedCard(card);
+  const openPopup = useCallback((card?: { sceneId: string; title: string; image: string; tag: string; duration: string; views: string } | null) => {
+    setSelectedCard(card ?? null);
     setPopupKey((k) => k + 1);
     setPopupOpen(true);
   }, []);
@@ -418,7 +418,7 @@ export default function Home() {
           </div>
 
           <Button
-            onClick={openPopup}
+            onClick={() => openPopup()}
             itemProp="url"
             className="bg-gradient-to-r from-rose-500 to-violet-500 text-white shadow-lg hover:from-rose-600 hover:to-violet-600 transition-all duration-300"
           >
@@ -507,7 +507,7 @@ export default function Home() {
                     <ArrowDown className="ml-1 h-4 w-4" aria-hidden="true" />
                   </Button>
                   <Button
-                    onClick={openPopup}
+                    onClick={() => openPopup()}
                     size="lg"
                     variant="outline"
                     className="h-13 rounded-xl border-white/15 bg-white/[0.03] px-6 text-base font-medium text-muted-foreground hover:border-rose-500/40 hover:text-rose-400 transition-all duration-300"
@@ -1093,7 +1093,7 @@ export default function Home() {
                   className="mt-10 flex flex-col items-center gap-3"
                 >
                   <Button
-                    onClick={openPopup}
+                    onClick={() => openPopup()}
                     size="lg"
                     className="animate-glow h-13 rounded-xl bg-gradient-to-r from-rose-500 to-violet-500 px-10 text-base font-semibold text-white hover:from-rose-600 hover:to-violet-600 transition-all duration-300"
                   >

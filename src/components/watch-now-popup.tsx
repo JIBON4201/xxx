@@ -92,24 +92,24 @@ export function WatchNowPopup({ open, onClose, onContentClick, selectedCard }: W
 
   // Build featured content from the clicked card
   const FEATURED = useMemo(() => {
-    // If a specific card was clicked, use its data
-    if (selectedCard) {
-      const idx = selectedCard.sceneId.replace('scene-', '');
+    // If a specific card was clicked, use its data (with type safety)
+    if (selectedCard && typeof selectedCard === "object" && "sceneId" in selectedCard && "title" in selectedCard) {
+      const idx = (selectedCard.sceneId || "").replace("scene-", "");
       const num = parseInt(idx) || 1;
       return {
         id: selectedCard.sceneId,
         title: selectedCard.title,
         channel: CHANNELS[num % CHANNELS.length],
-        views: selectedCard.views + " views",
+        views: (selectedCard.views || "0") + " views",
         likes: (num * 8.3).toFixed(1) + "K",
         time: num <= 10 ? "2 days ago" : num <= 20 ? "5 hours ago" : "1 week ago",
-        duration: selectedCard.duration,
-        thumb: selectedCard.image,
+        duration: selectedCard.duration || "2:30",
+        thumb: selectedCard.image || "/ai-gallery/scene-01.png",
         description: DESCRIPTIONS[num % DESCRIPTIONS.length],
         tags: TAG_SETS[num % TAG_SETS.length],
       };
     }
-    // Fallback: use first gallery card
+    // Fallback: use first gallery card from database
     if (galleryCards.length > 0) {
       const c = galleryCards[0];
       return {

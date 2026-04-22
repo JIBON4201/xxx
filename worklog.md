@@ -431,3 +431,58 @@ Stage Summary:
 - Gallery now reads from database instead of hardcoded array — changes in admin reflect instantly
 - Image upload saves to /public/ai-gallery/ and auto-links to card
 - Key files: prisma/schema.prisma, prisma/seed.ts, src/app/api/gallery/route.ts, src/app/api/admin/cards/route.ts, src/app/api/admin/cards/[id]/route.ts, src/app/api/admin/upload/route.ts, src/app/admin/page.tsx, src/components/ai-gallery-section.tsx
+---
+Task ID: 3
+Agent: Main Agent
+Task: Full feature audit — fix popup card mismatch, broken upload, and clean up
+
+Work Log:
+- Audited all key files: page.tsx, ai-gallery-section.tsx, watch-now-popup.tsx, admin API routes
+- Tested all API endpoints: /api/gallery (200), /api/admin/cards (200), /api/admin/upload (broken)
+- Identified 4 bugs and fixed them all
+
+Bugs found and fixed:
+
+1. **CRITICAL: "Watch Now" buttons pass MouseEvent to openPopup (page.tsx)**
+   - All 3 "Watch Now" buttons (nav, hero, final CTA) used `onClick={openPopup}` directly
+   - This passed the React MouseEvent object as the card parameter
+   - The popup received `selectedCard = MouseEvent`, then crashed trying to call `.sceneId.replace()` on undefined
+   - Fixed by changing all 3 to `onClick={() => openPopup()}` — now passes `undefined` which becomes `null`
+   - Also made `openPopup` accept optional parameter: `card?: {...} | null`
+
+2. **CRITICAL: Popup shows wrong card when selectedCard is not a valid card object (watch-now-popup.tsx)**
+   - FEATURED useMemo checked `if (selectedCard)` but a MouseEvent is truthy, causing it to try accessing non-existent properties
+   - Added type safety: `typeof selectedCard === "object" && "sceneId" in selectedCard && "title" in selectedCard`
+   - Added null-safe fallbacks for all selectedCard property accesses (`.sceneId || ""`, `.image || "/ai-gallery/scene-01.png"`)
+
+3. **CRITICAL: Upload API route missing (/api/admin/upload)**
+   - Admin page calls `POST /api/admin/upload` but the route file was lost from a previous session
+   - Created `src/app/api/admin/upload/route.ts`:
+     - Validates multipart/form-data content type (returns 400 if wrong)
+     - Validates file type (JPG, PNG, WebP, GIF only)
+     - Validates file size (5MB max)
+     - If cardId provided: saves as stable `scene-XX.ext` filename, deletes old format files, updates DB
+     - If no cardId: saves with unique timestamp-based filename
+   - Tested successfully: upload with cardId correctly renames file and updates database
+
+4. **Duplicate image files in public/ai-gallery/**
+   - 53 files for 28 scenes (some had both original .png and uploaded .webp/.jpg)
+   - Identified which format each scene uses from database
+   - Deleted 25 old .png files that were no longer referenced
+   - Reduced from 53 to 28 files (1 per scene)
+   - Regenerated scene-01.webp after accidental deletion during testing
+
+All fixes verified:
+- ESLint passes with 0 errors
+- Dev server compiles with no runtime errors
+- Gallery API returns 28 active cards with valid image paths
+- Admin cards API returns 28 cards
+- Upload API works with multipart/form-data
+- All "Watch Now" buttons properly pass null instead of MouseEvent
+- Popup FEATURED useMemo has type-safe card validation
+
+Stage Summary:
+- Fixed 4 bugs: MouseEvent leak, popup type safety, missing upload route, duplicate files
+- All features working: gallery display, card click → popup with correct card, admin CRUD, image upload
+- 28 gallery images, 28 database cards, all active, proper categories
+- Key files: src/app/page.tsx, src/components/watch-now-popup.tsx, src/app/api/admin/upload/route.ts (new)
