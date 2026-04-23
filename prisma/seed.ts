@@ -5,7 +5,6 @@ const db = new PrismaClient()
 const ICONS = ["Sparkles", "TrendingUp", "Film", "Flame", "Crown", "Zap"]
 
 const cards = [
-  { sceneId: "scene-01", title: "Neon Metropolis", tag: "AI Preview", image: "/ai-gallery/scene-01.png", duration: "2:34", views: "14.2K", icon: "Sparkles", category: "all", order: 1 },
   { sceneId: "scene-02", title: "Cosmic Nebula", tag: "Featured Preview", image: "/ai-gallery/scene-02.png", duration: "3:18", views: "22.8K", icon: "TrendingUp", category: "all", order: 2 },
   { sceneId: "scene-03", title: "Deep Ocean Dreams", tag: "AI Preview", image: "/ai-gallery/scene-03.png", duration: "1:52", views: "9.7K", icon: "Sparkles", category: "all", order: 3 },
   { sceneId: "scene-04", title: "Liquid Chrome", tag: "Trending Visual", image: "/ai-gallery/scene-04.png", duration: "2:07", views: "18.3K", icon: "TrendingUp", category: "all", order: 4 },
